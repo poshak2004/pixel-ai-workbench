@@ -25,6 +25,7 @@ import { computerTools, UnconfiguredComputerDriver } from '../computer/tools';
 import { WorkflowService } from '../workflows/service';
 import { WorkflowsRepo } from '../storage/repos/workflows';
 import { seed, DEMO_PROVIDER_IDS } from './seed';
+import { McpManager } from '../mcp/manager';
 import { AgentService, ProjectService, RoleService, TableService } from './services';
 
 export interface PixelAppOptions {
@@ -71,6 +72,7 @@ export class PixelApp {
   readonly agents: AgentService;
   readonly roles: RoleService;
   readonly workflows: WorkflowService;
+  readonly mcp: McpManager;
 
   private constructor(
     private readonly database: Database,
@@ -124,6 +126,7 @@ export class PixelApp {
     this.tables = new TableService(this.repos.tables, this.repos.roles, clock, ids);
     this.agents = new AgentService(this.repos.agents, this.repos.roles, clock, ids);
     this.roles = new RoleService(this.repos.roles, clock, ids);
+    this.mcp = new McpManager(this.repos.settings, options.credentials, this.redactor, this.tools, ids);
     this.workflows = new WorkflowService({ repo: this.repos.workflows, runs: this.runs, runsRepo: this.repos.runs, approvals: this.approvals, providers: this.providers, roles: this.repos.roles, tables: this.repos.tables, projects: this.repos.projects, redactor: this.redactor, bus: this.bus, runStatus: this.runStatus, clock, ids, tools: this.tools });
   }
 
@@ -167,6 +170,7 @@ export class PixelApp {
   }
 
   close() {
+    this.mcp.closeAll();
     this.database.close();
   }
 }

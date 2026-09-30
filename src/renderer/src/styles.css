@@ -1,0 +1,195 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * PIXEL visual identity: old computer terminal × Japanese stationery × modern IDE.
+ * Warm paper, muted inks, hairline rules, pixel-square details, monospace metadata.
+ */
+:root {
+  --paper: #f3efe6;
+  --paper-2: #ebe5d8;
+  --card: #fbf8f2;
+  --card-2: #f6f2ea;
+  --ink: #2a2825;
+  --ink-2: #57524a;
+  --ink-3: #8a8377;
+  --line: #d9d0bf;
+  --line-2: #e6dfd1;
+  --sage: #8fa383;
+  --sage-ink: #4b6142;
+  --sage-soft: #e2e9d9;
+  --blue: #7f97b0;
+  --blue-ink: #3e5876;
+  --blue-soft: #dde5ee;
+  --lav: #a99cc5;
+  --lav-ink: #5d5085;
+  --lav-soft: #e7e2f0;
+  --peach: #e2ac91;
+  --peach-ink: #955236;
+  --peach-soft: #f5e2d7;
+  --verm: #bf4d33;
+  --verm-soft: #f2d9d1;
+  --amber: #c49a45;
+  --amber-ink: #775a1c;
+  --amber-soft: #f2e8cf;
+  --shadow: 0 1px 0 rgba(42, 40, 37, 0.04), 0 1px 2px rgba(42, 40, 37, 0.06);
+  color-scheme: light;
+}
+
+.dark {
+  --paper: #1d1c1a;
+  --paper-2: #181715;
+  --card: #25231f;
+  --card-2: #2b2925;
+  --ink: #ece6da;
+  --ink-2: #bfb7a8;
+  --ink-3: #8c8475;
+  --line: #3b3832;
+  --line-2: #312e29;
+  --sage: #8fa383;
+  --sage-ink: #b6c9a9;
+  --sage-soft: #2e3629;
+  --blue: #7f97b0;
+  --blue-ink: #aec2d8;
+  --blue-soft: #28313b;
+  --lav: #a99cc5;
+  --lav-ink: #cbc0e3;
+  --lav-soft: #322d3d;
+  --peach: #e2ac91;
+  --peach-ink: #efc2ab;
+  --peach-soft: #3d2d25;
+  --verm: #d9694f;
+  --verm-soft: #432822;
+  --amber: #d2ab58;
+  --amber-ink: #e6c98a;
+  --amber-soft: #3b3322;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-card: var(--card);
+  --color-card-2: var(--card-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-sage: var(--sage);
+  --color-sage-ink: var(--sage-ink);
+  --color-sage-soft: var(--sage-soft);
+  --color-blue: var(--blue);
+  --color-blue-ink: var(--blue-ink);
+  --color-blue-soft: var(--blue-soft);
+  --color-lav: var(--lav);
+  --color-lav-ink: var(--lav-ink);
+  --color-lav-soft: var(--lav-soft);
+  --color-peach: var(--peach);
+  --color-peach-ink: var(--peach-ink);
+  --color-peach-soft: var(--peach-soft);
+  --color-verm: var(--verm);
+  --color-verm-soft: var(--verm-soft);
+  --color-amber: var(--amber);
+  --color-amber-ink: var(--amber-ink);
+  --color-amber-soft: var(--amber-soft);
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Hiragino Sans', sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, monospace;
+  --shadow-paper: var(--shadow);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+input,
+textarea,
+select,
+[data-selectable] {
+  user-select: text;
+}
+
+::selection {
+  background: var(--lav-soft);
+}
+
+/* Hairline dotted rule, like ruled stationery. */
+.rule-dotted {
+  background-image: radial-gradient(var(--line) 1px, transparent 1px);
+  background-size: 6px 6px;
+  background-position: 0 center;
+  background-repeat: repeat-x;
+  height: 6px;
+}
+
+/* Subtle grid paper for canvases. */
+.grid-paper {
+  background-color: var(--card-2);
+  background-image:
+    linear-gradient(var(--line-2) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-2) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.drag-region {
+  -webkit-app-region: drag;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Pixel blink for "thinking" status. */
+@keyframes pixel-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.25; }
+}
+.pixel-blink {
+  animation: pixel-blink 1s steps(1) infinite;
+}
+
+@keyframes pixel-march {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(8px); }
+}
+
+/* Governance hanko stamp. */
+.stamp {
+  font-family: var(--font-mono);
+  letter-spacing: 0.12em;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  transform: rotate(-3deg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}

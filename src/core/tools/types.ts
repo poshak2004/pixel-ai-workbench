@@ -36,6 +36,10 @@ export class ToolRegistry {
     return this;
   }
 
+  unregister(name: string): void {
+    this.tools.delete(name);
+  }
+
   get(name: string): Tool<any> | undefined {
     return this.tools.get(name);
   }

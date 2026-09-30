@@ -39,6 +39,17 @@ export async function resolveInside(root: string, p: string): Promise<string> {
   }
 }
 
+/** Paths governance must check: the requested path and, if it exists, where it really points. */
+export async function governedPaths(p: string, ctx: ToolContext): Promise<string[]> {
+  const rel = normaliseRelative(p);
+  if (!ctx.root) return [rel];
+  const realRoot = await realpath(ctx.root);
+  const abs = await resolveInside(ctx.root, p);
+  const real = await realpath(abs).catch(() => abs);
+  const realRel = relative(realRoot, real) || '.';
+  return realRel === rel ? [rel] : [rel, realRel];
+}
+
 function requireRoot(ctx: ToolContext): string {
   if (!ctx.root) throw new Error('No workspace is attached to this run');
   return ctx.root;
@@ -53,7 +64,7 @@ export const readFileTool: Tool<z.infer<typeof ReadArgs>> = {
   actionKind: 'fs.read',
   input: ReadArgs,
   jsonSchema: { type: 'object', properties: { path: { type: 'string', description: 'Workspace-relative path' } }, required: ['path'], additionalProperties: false },
-  paths: (a) => [normaliseRelative(a.path)],
+  paths: (a, ctx) => governedPaths(a.path, ctx),
   async run(args, ctx) {
     const abs = await resolveInside(requireRoot(ctx), args.path);
     const info = await stat(abs);
@@ -71,7 +82,7 @@ export const listDirTool: Tool<z.infer<typeof ListArgs>> = {
   actionKind: 'fs.read',
   input: ListArgs,
   jsonSchema: { type: 'object', properties: { path: { type: 'string', description: 'Workspace-relative directory, default "."' } }, additionalProperties: false },
-  paths: (a) => [normaliseRelative(a.path)],
+  paths: (a, ctx) => governedPaths(a.path, ctx),
   async run(args, ctx) {
     const abs = await resolveInside(requireRoot(ctx), args.path);
     const entries = await readdir(abs, { withFileTypes: true });
@@ -96,7 +107,7 @@ export const writeFileTool: Tool<z.infer<typeof WriteArgs>> = {
     required: ['path', 'content'],
     additionalProperties: false,
   },
-  paths: (a) => [normaliseRelative(a.path)],
+  paths: (a, ctx) => governedPaths(a.path, ctx),
   async run(args, ctx) {
     const abs = await resolveInside(requireRoot(ctx), args.path);
     await mkdir(dirname(abs), { recursive: true });

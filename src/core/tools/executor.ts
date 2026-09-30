@@ -56,7 +56,7 @@ export class ToolExecutor {
 
     let paths: string[];
     try {
-      paths = tool.paths(args);
+      paths = await tool.paths(args, { root: this.root, signal });
     } catch (err) {
       return this.finish(seat, tool, args, 'BLOCK', 'blocked', `Blocked: ${(err as Error).message}`, started, true);
     }

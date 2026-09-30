@@ -18,8 +18,11 @@ export interface Tool<A = Record<string, unknown>> {
   actionKind: ActionKind;
   input: z.ZodType<A>;
   jsonSchema: Record<string, unknown>;
-  /** Workspace-relative paths the call would touch (for protected-path rules). */
-  paths(args: A): string[];
+  /**
+   * Workspace-relative paths the call would touch (for protected-path rules). Should include the
+   * symlink-resolved location too. Throwing means the call is refused.
+   */
+  paths(args: A, ctx: ToolContext): string[] | Promise<string[]>;
   run(args: A, ctx: ToolContext): Promise<string>;
 }
 

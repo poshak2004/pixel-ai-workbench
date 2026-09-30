@@ -1,5 +1,6 @@
-import { stat } from 'node:fs/promises';
-import { isAbsolute } from 'node:path';
+import { realpath, stat } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { dirname, isAbsolute, sep } from 'node:path';
 import { AgentSpecSchema, type AgentSpec } from '../agents/types';
 import type { GitService } from '../git/service';
 import { ProjectInputSchema, type Project, type ProjectInput } from '../projects/types';
@@ -21,6 +22,8 @@ export class ProjectService {
     private readonly git: GitService,
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
+    /** PIXEL's own data directory (demo workspace lives here). */
+    private readonly trustedRoots: string[] = [],
   ) {}
 
   list() {
@@ -34,6 +37,7 @@ export class ProjectService {
       if (!isAbsolute(input.path)) throw new Error('Project path must be absolute');
       const info = await stat(input.path).catch(() => null);
       if (!info?.isDirectory()) throw new Error('Project path is not a folder');
+      assertReasonableWorkspace(await realpath(input.path), homedir(), this.trustedRoots);
       isGit = await this.git.isRepo(input.path);
     }
     const now = this.clock.now();
@@ -220,4 +224,17 @@ export class RoleService {
     if (role?.builtIn) throw new Error('Built-in roles cannot be deleted');
     await this.repo.delete(id);
   }
+}
+
+/**
+ * A project grants agents (at least) read access to everything below its folder, so refuse folders
+ * that would expose the whole disk, a whole home directory or system locations.
+ */
+export function assertReasonableWorkspace(real: string, home = homedir(), allowUnder: string[] = []): void {
+  if (allowUnder.some((d) => real === d || real.startsWith(`${d}/`))) return;
+  const blocked = ['/', home, dirname(home), '/System', '/Library', '/Applications', '/usr', '/bin', '/sbin', '/etc', '/private', '/var', '/opt', '/Volumes', '/cores', '/dev'];
+  const norm = real.endsWith(sep) && real.length > 1 ? real.slice(0, -1) : real;
+  if (blocked.includes(norm)) throw new Error(`${norm} is too broad to be a project folder — choose a specific project directory`);
+  const sensitive = ['/System', '/Library', '/private/etc', '/usr', '/bin', '/sbin', `${home}/Library`, `${home}/.ssh`, `${home}/.aws`, `${home}/.gnupg`];
+  if (sensitive.some((d) => norm === d || norm.startsWith(`${d}/`))) throw new Error(`${norm} is a protected system or credential location`);
 }

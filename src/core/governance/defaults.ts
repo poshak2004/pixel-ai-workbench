@@ -22,8 +22,8 @@ export const SAFETY_POLICY: Policy = {
     {
       id: 'safety.secret-files',
       type: 'protect_paths',
-      description: 'Secret-bearing files are never read into model context.',
-      actions: ['fs.read'],
+      description: 'Secret-bearing files are never read into model context, directly or through a program.',
+      actions: ['fs.read', 'shell.exec'],
       patterns: ['**/.env', '**/.env.*', '**/*.pem', '**/*.key', '**/id_rsa*', '**/.ssh/**', '**/.npmrc', '**/.netrc', '**/credentials*.json'],
     },
     { id: 'safety.mac-control', type: 'require_approval', description: 'Every system-control action requires human approval.', actions: ['mac.control'] },

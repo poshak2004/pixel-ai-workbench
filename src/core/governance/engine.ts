@@ -236,7 +236,10 @@ export function evaluateRule(rule: Rule, action: GovernedAction): RuleResult {
   }
 }
 
-/** Minimal glob: `**` any depth, `*` one segment, `?` one char. Matches whole path. */
+/**
+ * Minimal glob: `**` any depth, `*` one segment, `?` one char. Matches the whole path,
+ * case-insensitively — macOS volumes are case-insensitive by default, so `.ENV` is `.env`.
+ */
 export function globToRegExp(glob: string): RegExp {
   let re = '';
   for (let i = 0; i < glob.length; i++) {
@@ -252,5 +255,5 @@ export function globToRegExp(glob: string): RegExp {
     } else if (ch === '?') re += '[^/]';
     else re += ch.replace(/[.+^${}()|[\]\\]/g, '\\$&');
   }
-  return new RegExp(`^${re}$`);
+  return new RegExp(`^${re}$`, 'i');
 }

@@ -77,7 +77,7 @@ export class ProviderManager implements ModelResolver {
       options: input.options ?? {},
       createdAt: this.clock.now(),
     };
-    if (config.baseUrl) assertSafeBaseUrl(config.baseUrl, config.kind);
+    if (config.baseUrl) assertSafeBaseUrl(config.baseUrl, config.kind, !!input.secret);
     await this.repo.upsert(config);
     if (input.secret) await this.setSecret(config.id, input.secret);
     return config;
@@ -100,6 +100,7 @@ export class ProviderManager implements ModelResolver {
     const problem = validateSecretShape(trimmed);
     if (problem) throw new Error(problem);
     const config = await this.requireConfig(providerId);
+    if (config.baseUrl) assertSafeBaseUrl(config.baseUrl, config.kind, true);
     const account = credentialAccount(providerId);
     await this.credentials.set(account, trimmed);
     this.redactor.register(trimmed);
@@ -174,16 +175,22 @@ export class ProviderManager implements ModelResolver {
   }
 }
 
-/** Remote providers must use HTTPS; plain HTTP is only allowed to loopback (local model servers). */
-export function assertSafeBaseUrl(url: string, kind: ProviderKind): void {
+/**
+ * Remote providers must use HTTPS. Plain HTTP is allowed only to loopback, or — for keyless local
+ * model servers — to other hosts on your network. An API key is never sent over plaintext to a
+ * non-loopback host.
+ */
+export function assertSafeBaseUrl(url: string, kind: ProviderKind, hasSecret = false): void {
   let u: URL;
   try {
     u = new URL(url);
   } catch {
     throw new Error(`Invalid base URL: ${url}`);
   }
+  if (u.username || u.password) throw new Error('Put credentials in the API key field, not in the URL');
   const loopback = ['localhost', '127.0.0.1', '::1', '[::1]'].includes(u.hostname);
   if (u.protocol === 'https:') return;
-  if (u.protocol === 'http:' && (loopback || kind === 'local')) return;
-  throw new Error('Base URL must use https:// (http:// is allowed only for localhost model servers)');
+  if (u.protocol === 'http:' && loopback) return;
+  if (u.protocol === 'http:' && kind === 'local' && !hasSecret) return;
+  throw new Error(hasSecret ? 'API keys can only be sent over https:// (or http:// to localhost)' : 'Base URL must use https:// (http:// is allowed only for local model servers)');
 }

@@ -1,5 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, session, shell } from 'electron';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { PixelApp } from '@core/app/pixel';
 import { KeychainCredentialStore, MemoryCredentialStore } from '@core/security/credentials';
 import { INVOKE_CHANNEL, type Envelope } from '../shared/channels';
@@ -40,15 +41,32 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => mainWindow?.show());
   mainWindow.on('closed', () => (mainWindow = null));
   if (isDev) void mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL!);
-  else void mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
+  else void mainWindow.loadFile(RENDERER_INDEX());
+}
+
+const RENDERER_INDEX = () => join(__dirname, '../renderer/index.html');
+
+/** Is this URL our own renderer (and nothing else — not any file:// page)? */
+function isOwnRenderer(url: string): boolean {
+  if (isDev) return url.startsWith(process.env.ELECTRON_RENDERER_URL!);
+  try {
+    const u = new URL(url);
+    return u.protocol === 'file:' && fileURLToPath(u) === RENDERER_INDEX();
+  } catch {
+    return false;
+  }
 }
 
 function hardenSessions() {
   session.defaultSession.setPermissionRequestHandler((_wc, _perm, cb) => cb(false));
+  session.defaultSession.setPermissionCheckHandler(() => false);
   app.on('web-contents-created', (_e, contents) => {
+    contents.on('will-attach-webview', (event) => event.preventDefault());
     contents.on('will-navigate', (event, url) => {
-      const allowed = isDev ? url.startsWith(process.env.ELECTRON_RENDERER_URL!) : url.startsWith('file://');
-      if (!allowed) event.preventDefault();
+      if (!isOwnRenderer(url)) event.preventDefault();
+    });
+    contents.on('will-redirect', (event, url) => {
+      if (!isOwnRenderer(url)) event.preventDefault();
     });
     contents.setWindowOpenHandler(({ url }) => {
       if (url.startsWith('https://')) void shell.openExternal(url);
@@ -78,8 +96,8 @@ async function bootstrap() {
 
   ipcMain.handle(INVOKE_CHANNEL, async (event, channel: string, input: unknown): Promise<Envelope<unknown>> => {
     // Only our own renderer may call in.
-    const origin = event.senderFrame?.url ?? '';
-    if (!(isDev ? origin.startsWith(process.env.ELECTRON_RENDERER_URL!) : origin.startsWith('file://'))) return { ok: false, error: 'Forbidden' };
+    const frame = event.senderFrame;
+    if (!frame || frame !== event.sender.mainFrame || !isOwnRenderer(frame.url)) return { ok: false, error: 'Forbidden' };
     const def = (api as Record<string, { schema: { safeParse(v: unknown): { success: boolean; data?: unknown; error?: { issues: { path: PropertyKey[]; message: string }[] } } }; fn(i: unknown): unknown }>)[channel];
     if (!def) return { ok: false, error: `Unknown channel ${channel}` };
     const parsed = def.schema.safeParse(input);

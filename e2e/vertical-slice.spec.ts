@@ -10,7 +10,8 @@ const shots = join(process.cwd(), 'test-results', 'screens');
 test.beforeAll(async () => {
   app = await electron.launch({
     args: ['.'],
-    env: { ...process.env, PIXEL_DATA_DIR: mkdtempSync(join(tmpdir(), 'pixel-e2e-')), PIXEL_CREDENTIAL_STORE: 'memory', PIXEL_MOCK_LATENCY: '0.15' },
+    // E2E_DATA_ROOT lets us run under ~/Library like the real app does.
+    env: { ...process.env, PIXEL_DATA_DIR: mkdtempSync(join(process.env.E2E_DATA_ROOT ?? tmpdir(), 'pixel-e2e-')), PIXEL_CREDENTIAL_STORE: 'memory', PIXEL_MOCK_LATENCY: '0.15' },
   });
   page = await app.firstWindow();
   page.on('pageerror', (e) => console.error('pageerror', e));

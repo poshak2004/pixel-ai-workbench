@@ -1,5 +1,6 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { realpathSync } from 'node:fs';
 import { EventBus, type RunEvent } from '../events/types';
 import { GitService } from '../git/service';
 import { ApprovalService } from '../governance/approval-service';
@@ -122,7 +123,7 @@ export class PixelApp {
       worktreesDir: join(options.dataDir, 'worktrees'),
     });
     this.usage = new UsageService(this.repos.runs);
-    this.projects = new ProjectService(this.repos.projects, this.repos.permissions, this.git, clock, ids);
+    this.projects = new ProjectService(this.repos.projects, this.repos.permissions, this.git, clock, ids, [realpathSync(options.dataDir)]);
     this.tables = new TableService(this.repos.tables, this.repos.roles, clock, ids);
     this.agents = new AgentService(this.repos.agents, this.repos.roles, clock, ids);
     this.roles = new RoleService(this.repos.roles, clock, ids);
@@ -131,7 +132,9 @@ export class PixelApp {
   }
 
   static async open(options: PixelAppOptions): Promise<PixelApp> {
-    await mkdir(options.dataDir, { recursive: true });
+    // Runs contain code, prompts and results: keep the data directory private to this user.
+    await mkdir(options.dataDir, { recursive: true, mode: 0o700 });
+    await chmod(options.dataDir, 0o700);
     const database = await openDatabase({ url: `file:${join(options.dataDir, 'pixel.db')}`, migrationsFolder: options.migrationsFolder });
     const app = new PixelApp(database, options);
     await seed({ roles: app.repos.roles, policies: app.repos.policies, providersRepo: app.repos.providers, providers: app.providers, settings: app.repos.settings, clock: options.clock ?? systemClock });

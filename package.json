@@ -55,5 +55,10 @@
     "esbuild@0.28.2": true,
     "electron@44.5.1": true,
     "electron-winstaller": false
+  },
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.25.12"
+    }
   }
 }

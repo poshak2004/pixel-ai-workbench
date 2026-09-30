@@ -18,4 +18,15 @@ mac:
     - target: dmg
       arch: [arm64]
   hardenedRuntime: true
-  identity: null
+  # Ad-hoc signature: required on Apple Silicon after fuses modify the binary. Replace with a
+  # Developer ID identity for distribution (and add notarization).
+  identity: "-"
+# Harden the packaged binary: it must not be usable as a generic Node runtime (which would inherit
+# PIXEL's Keychain access), accept NODE_OPTIONS, open an inspector, or load code outside the asar.
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true

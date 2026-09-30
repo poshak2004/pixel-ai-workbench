@@ -14,6 +14,8 @@ npm run test:e2e       # build + Playwright end-to-end tests against Electron
 npm run dist           # unsigned PIXEL.app in dist/mac-arm64
 ```
 
+`npm install` downloads the Electron binary via a postinstall step (npm 11 can skip dependency install scripts). If you ever see `Error: Electron uninstall`, run `node node_modules/electron/install.js`.
+
 No API keys are required: **Home → Load the demo council** runs a Table of Agents on three deterministic offline providers.
 
 ## Architecture

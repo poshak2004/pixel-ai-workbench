@@ -234,7 +234,7 @@ export function evaluateCondition(config: Record<string, unknown>, outputs: Reco
   const path = String(config.path ?? '');
   const op = String(config.op ?? 'truthy');
   const expected = config.value;
-  const actual = path.split('.').reduce<unknown>((acc, key) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined), outputs);
+  const actual = path.split('.').reduce<unknown>((acc, key) => (acc && typeof acc === 'object' && Object.hasOwn(acc, key) ? (acc as Record<string, unknown>)[key] : undefined), outputs);
   switch (op) {
     case 'eq':
       return actual === expected || String(actual) === String(expected);

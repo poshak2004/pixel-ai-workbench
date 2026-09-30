@@ -203,3 +203,37 @@ describe('PixelApp — agents cannot modify governance', () => {
     expect(policies.find((p) => p.layer === 'system')!.rules.length).toBeGreaterThan(3);
   });
 });
+
+describe('PixelApp — workflows', () => {
+  it('runs START → TABLE → CONDITION → APPROVAL → END with a human in the loop', async () => {
+    const { app } = await openApp();
+    const { projectId } = await app.createDemo();
+    const wf = await app.workflows.create('Plan and sign off', projectId);
+    expect(app.workflows.validate(wf).ok).toBe(true);
+    const run = await app.workflows.start(wf.id, 'Add token-based authentication to the sync API', projectId);
+    let pending: Awaited<ReturnType<typeof app.approvals.pending>> = [];
+    for (let i = 0; i < 300 && pending.length === 0; i++) {
+      pending = await app.approvals.pending();
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    expect(pending).toHaveLength(1);
+    await app.approvals.resolve(pending[0]!.id, 'approved');
+    const done = await waitForSettle(app, run.id);
+    expect(done.status).toBe('completed');
+    expect(done.outcome).toBe('completed:Done');
+    const events = await app.repos.runs.events(run.id);
+    const nodeEvents = events.filter((e) => e.type.startsWith('node.')).map((e) => `${e.type}:${e.payload.nodeId}`);
+    expect(nodeEvents).toContain('node.completed:council');
+    expect(nodeEvents).toContain('node.skipped:stopped');
+    expect(events.some((e) => e.type === 'judgment.recorded')).toBe(true);
+  });
+
+  it('a blocked table routes the workflow down the false branch', async () => {
+    const { app } = await openApp();
+    const { projectId } = await app.createDemo();
+    const wf = await app.workflows.create('Guarded', projectId);
+    const run = await app.workflows.start(wf.id, 'Delete inactive customer records from the production database', projectId);
+    const done = await waitForSettle(app, run.id);
+    expect(done.outcome).toBe('completed:Stopped');
+  });
+});

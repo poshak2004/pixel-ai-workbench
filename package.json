@@ -1,0 +1,58 @@
+{
+  "name": "pixel",
+  "productName": "PIXEL",
+  "version": "0.1.0",
+  "description": "Local-first AI engineering & agent execution environment",
+  "private": true,
+  "type": "module",
+  "main": "out/main/index.js",
+  "author": "PIXEL",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "electron-vite build && playwright test",
+    "db:generate": "drizzle-kit generate",
+    "dist": "electron-vite build && electron-builder --mac --dir",
+    "dist:dmg": "electron-vite build && electron-builder --mac"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.129.0",
+    "@libsql/client": "0.18.0",
+    "@napi-rs/keyring": "2.1.0",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "cmdk": "1.1.1",
+    "drizzle-orm": "0.45.3",
+    "lucide-react": "1.49.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "tailwind-merge": "3.7.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "24.19.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "5.2.0",
+    "drizzle-kit": "0.31.11",
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3",
+    "electron-vite": "5.0.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3",
+    "vite": "7.3.6",
+    "vitest": "5.0.3"
+  },
+  "allowScripts": {
+    "esbuild@0.18.20": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true,
+    "electron@44.5.1": true,
+    "electron-winstaller": false
+  }
+}

@@ -1,0 +1,21 @@
+appId: dev.pixel.workbench
+productName: PIXEL
+directories:
+  buildResources: resources
+  output: dist
+files:
+  - out/**
+  - package.json
+  - '!**/*.map'
+extraResources:
+  - from: drizzle
+    to: drizzle
+asarUnpack:
+  - '**/*.node'
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - target: dmg
+      arch: [arm64]
+  hardenedRuntime: true
+  identity: null

@@ -94,3 +94,16 @@ test('create a table from scratch, add a seat and assign a different model', asy
   await expect(page.getByTestId('seat-tester')).toContainText('Borealis Pro');
   await page.screenshot({ path: join(shots, '11-custom-table.png') });
 });
+
+test('every page renders without crashing', async () => {
+  const pages = ['Home', 'Playground', 'Agents', 'Tables', 'Workflows', 'Projects', 'Runs', 'Sessions', 'Models', 'Usage', 'MCP', 'Settings'];
+  for (const name of pages) {
+    await page.getByRole('button', { name, exact: true }).click();
+    await expect(page.locator('main h1').first(), name).toBeVisible();
+    await expect(page.getByText('Something went wrong'), name).toHaveCount(0);
+  }
+  // Project detail, reached directly and via the list.
+  await page.getByRole('button', { name: 'Projects', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Permission ceiling' })).toBeVisible();
+  await page.screenshot({ path: join(shots, '12-projects.png') });
+});

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CommandPalette } from './components/layout/CommandPalette';
 import { Sidebar } from './components/layout/Sidebar';
+import { ErrorBoundary } from './components/layout/ErrorBoundary';
 import { useRoute } from './lib/router';
 import { wirePushInvalidation } from './lib/store';
 import { AgentsPage } from './pages/Agents';
@@ -54,13 +55,16 @@ function Routes() {
 
 export function App() {
   const [palette, setPalette] = useState(false);
+  const { path } = useRoute();
   useEffect(() => wirePushInvalidation(), []);
   return (
     <div className="flex h-full">
       <Sidebar onCommand={() => setPalette(true)} />
       <main className="relative flex min-w-0 flex-1 flex-col">
         <div className="drag-region h-[14px] shrink-0" />
-        <Routes />
+        <ErrorBoundary resetKey={path}>
+          <Routes />
+        </ErrorBoundary>
       </main>
       <CommandPalette open={palette} onOpenChange={setPalette} />
     </div>

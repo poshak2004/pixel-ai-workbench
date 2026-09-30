@@ -10,7 +10,7 @@ import { call } from '../lib/ipc';
 import { navigate } from '../lib/router';
 import { useAction, useQuery } from '../lib/store';
 import { useToast } from '../lib/toast';
-import type { PermissionGrant } from '../lib/types';
+import type { PermissionGrant, Project } from '../lib/types';
 
 export function ProjectsPage({ selected }: { selected?: string }) {
   const projects = useQuery('projects.list');
@@ -33,7 +33,7 @@ export function ProjectsPage({ selected }: { selected?: string }) {
               </button>
             ))}
           </Card>
-          {current ? <ProjectDetail key={current.id} id={current.id} /> : null}
+          {current ? <ProjectDetail key={current.id} project={current} /> : null}
         </div>
       )}
       <NewProject open={open} onClose={() => setOpen(false)} />
@@ -41,10 +41,9 @@ export function ProjectsPage({ selected }: { selected?: string }) {
   );
 }
 
-function ProjectDetail({ id }: { id: string }) {
+function ProjectDetail({ project: p }: { project: Project }) {
   const toast = useToast();
-  const projects = useQuery('projects.list');
-  const p = projects.data?.find((x) => x.id === id)!;
+  const id = p.id;
   const git = useQuery('projects.gitStatus', { id });
   const ceiling = useQuery('projects.getCeiling', { id });
   const runs = useQuery('runs.list', { projectId: id, limit: 10 });

@@ -123,3 +123,11 @@ export function extractJsonObject(text: string): unknown {
   }
   throw new Error('No JSON object found in model output');
 }
+
+/**
+ * Remove characters that corrupt storage or display: NUL (SQLite TEXT truncates at it) and other
+ * C0 control characters except tab/newline/carriage return, plus unpaired UTF-16 surrogates.
+ */
+export function cleanText(s: string): string {
+  return s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '\uFFFD');
+}

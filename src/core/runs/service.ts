@@ -23,7 +23,7 @@ import type { Table } from '../teams/types';
 import { effectiveAuthority, validateTable } from '../teams/validate';
 import { ToolExecutor } from '../tools/executor';
 import type { ToolRegistry } from '../tools/types';
-import type { Clock, IdGenerator } from '../util/runtime';
+import { cleanText, type Clock, type IdGenerator } from '../util/runtime';
 import { RunJournal } from './journal';
 import type { RunRecord, RunStatus } from './types';
 
@@ -99,7 +99,7 @@ export class RunService {
   }
 
   async startTableRun(input: StartTableRunInput, parentRunId: string | null = null, snapshotOverride?: TableRunSnapshot): Promise<RunRecord> {
-    const task = input.task.trim();
+    const task = cleanText(input.task).trim();
     if (!task) throw new Error('Task is required');
     const project = input.projectId ? await this.d.projects.get(input.projectId) : null;
     const snapshot = snapshotOverride ?? (await this.snapshotTable(input.tableId, project, input.taskRules ?? []));
@@ -135,7 +135,9 @@ export class RunService {
   }
 
   /** Single agent, governed (Playground). */
-  async startAgentRun(input: { spec: AgentSpec; task: string; projectId?: string | null }): Promise<RunRecord> {
+  async startAgentRun(raw: { spec: AgentSpec; task: string; projectId?: string | null }): Promise<RunRecord> {
+    const input = { ...raw, task: cleanText(raw.task).trim() };
+    if (!input.task) throw new Error('Task is required');
     const role = await this.d.roles.get(input.spec.roleId);
     if (!role) throw new Error('Unknown role');
     await this.assertModelsAvailable([input.spec.model]);
@@ -171,7 +173,9 @@ export class RunService {
    * Model Observatory: the same task, same role, several models. Each candidate works independently;
    * an optional reviewer model (on the Critic constitution) reviews every candidate blind.
    */
-  async startCompareRun(input: { task: string; roleId: string; candidates: ModelRef[]; reviewer: ModelRef | null; projectId?: string | null }): Promise<RunRecord> {
+  async startCompareRun(raw: { task: string; roleId: string; candidates: ModelRef[]; reviewer: ModelRef | null; projectId?: string | null }): Promise<RunRecord> {
+    const input = { ...raw, task: cleanText(raw.task).trim() };
+    if (!input.task) throw new Error('Task is required');
     const role = await this.d.roles.get(input.roleId);
     const critic = await this.d.roles.get('role_critic');
     if (!role || !critic) throw new Error('Unknown role');

@@ -20,7 +20,7 @@ import { TableExecutor } from '../teams/executor';
 import { ToolExecutor } from '../tools/executor';
 import type { ToolRegistry } from '../tools/types';
 import type { Clock, IdGenerator } from '../util/runtime';
-import { sleep } from '../util/runtime';
+import { cleanText, sleep } from '../util/runtime';
 import { evaluateCondition, executeWorkflow, validateWorkflow, type NodeExecutor } from './engine';
 import { WorkflowEdgeSchema, WorkflowNodeSchema, type Workflow, type WorkflowNode } from './types';
 import { z } from 'zod';
@@ -110,7 +110,9 @@ export class WorkflowService {
     return validateWorkflow(wf);
   }
 
-  async start(workflowId: string, task: string, projectId: string | null = null): Promise<RunRecord> {
+  async start(workflowId: string, rawTask: string, projectId: string | null = null): Promise<RunRecord> {
+    const task = cleanText(rawTask).trim();
+    if (!task) throw new Error('Task is required');
     const wf = await this.d.repo.get(workflowId);
     if (!wf) throw new Error('Workflow not found');
     const v = validateWorkflow(wf);

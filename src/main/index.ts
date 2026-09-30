@@ -97,7 +97,24 @@ async function bootstrap() {
 }
 
 app.setName('PIXEL');
+// Scope Electron's own profile (and the single-instance lock) to the data directory in use.
+if (process.env.PIXEL_DATA_DIR) app.setPath('userData', join(process.env.PIXEL_DATA_DIR, 'electron'));
+
+// One writer per database: a second instance would mistake the first one's live runs for
+// interrupted ones and fail them. Focus the existing window instead.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+}
+
 app.whenReady().then(async () => {
+  if (!app.hasSingleInstanceLock()) return;
   hardenSessions();
   try {
     await bootstrap();

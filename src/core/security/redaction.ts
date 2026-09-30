@@ -1,3 +1,5 @@
+import { cleanText } from '../util/runtime';
+
 /**
  * Secret redaction applied to everything that is persisted, logged or sent to the renderer.
  * Two layers: known credential shapes (pattern-based) and exact values of secrets PIXEL has loaded.
@@ -32,7 +34,7 @@ export class SecretRedactor {
   }
 
   redactString(input: string): string {
-    let out = input;
+    let out = cleanText(input);
     for (const secret of this.known) {
       if (out.includes(secret)) out = out.split(secret).join(REDACTED);
     }

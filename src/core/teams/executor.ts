@@ -188,7 +188,7 @@ export class TableExecutor {
 
       const proposalDoc = (seatId: string) => {
         const s = bySeat.get(seatId)!;
-        return { title: `${seatId} (${s.role.name})`, source: `run:proposal:${seatId}`, content: '```json\n' + JSON.stringify({ seatId, role: s.role.name, ...result.proposals[seatId] }, null, 2) + '\n```' };
+        return { title: `${seatId} (${s.role.name})`, source: `run:proposal:${seatId}`, content: '```json\n' + JSON.stringify({ seatId, role: s.role.name, ...result.proposals[seatId] }) + '\n```' };
       };
 
       // ── Phase 2: blind cross-review ─────────────────────────────────────────────────
@@ -302,7 +302,7 @@ export class TableExecutor {
               { name: 'REBUTTAL', instructions: 'Respond to each challenge against your proposal: concede, dispute with evidence, or describe a concrete mitigation. Use the exact challengeId values.' },
               [
                 proposalDoc(s.seatId),
-                { title: 'CHALLENGES AGAINST YOUR PROPOSAL', source: 'run:challenges', content: '```json\n' + JSON.stringify(mine.map(({ id, claim, severity, evidence, bySeatId }) => ({ challengeId: id, fromSeat: bySeatId, severity, claim, evidence })), null, 2) + '\n```' },
+                { title: 'CHALLENGES AGAINST YOUR PROPOSAL', source: 'run:challenges', content: '```json\n' + JSON.stringify(mine.map(({ id, claim, severity, evidence, bySeatId }) => ({ challengeId: id, fromSeat: bySeatId, severity, claim, evidence }))) + '\n```' },
               ],
             );
             for (const resp of r.output.responses) {
@@ -345,7 +345,7 @@ export class TableExecutor {
                 s,
                 'resolution',
                 { name: 'RESOLUTION', instructions: 'For each of your challenges, decide whether the author’s response resolves it. Judge the evidence independently; do not accept a response merely because it is confident.' },
-                [{ title: 'YOUR CHALLENGES AND THE AUTHORS’ RESPONSES', source: 'run:rebuttals', content: '```json\n' + JSON.stringify(mine.map((c) => ({ challengeId: c.id, targetSeat: c.targetSeatId, severity: c.severity, claim: c.claim, rebuttal: c.rebuttal })), null, 2) + '\n```' }],
+                [{ title: 'YOUR CHALLENGES AND THE AUTHORS’ RESPONSES', source: 'run:rebuttals', content: '```json\n' + JSON.stringify(mine.map((c) => ({ challengeId: c.id, targetSeat: c.targetSeatId, severity: c.severity, claim: c.claim, rebuttal: c.rebuttal }))) + '\n```' }],
               );
               for (const res of r.output.resolutions) {
                 const ch = mine.find((c) => c.id === res.challengeId);
@@ -393,8 +393,8 @@ export class TableExecutor {
         },
         [
           ...Object.keys(result.proposals).map(proposalDoc),
-          { title: 'REVIEWS', source: 'run:reviews', content: '```json\n' + JSON.stringify(reviewDigest, null, 2) + '\n```' },
-          { title: 'CHALLENGES', source: 'run:challenges', content: '```json\n' + JSON.stringify(challengeDigest, null, 2) + '\n```' },
+          { title: 'REVIEWS', source: 'run:reviews', content: '```json\n' + JSON.stringify(reviewDigest) + '\n```' },
+          { title: 'CHALLENGES', source: 'run:challenges', content: '```json\n' + JSON.stringify(challengeDigest) + '\n```' },
         ],
       );
       let adj = j.output;

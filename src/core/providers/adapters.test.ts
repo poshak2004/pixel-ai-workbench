@@ -141,6 +141,18 @@ describe('Anthropic adapter (official SDK, injected fetch)', () => {
     expect(c.body.messages).toHaveLength(3);
     expect(c.body.messages[2].content.map((b: { type: string }) => b.type)).toEqual(['tool_result', 'tool_result']);
     expect(c.body.messages[2].content[1].is_error).toBe(true);
+    // Tool calls cache the conversation prefix on the final block only.
+    expect(c.body.messages[2].content[1].cache_control).toEqual({ type: 'ephemeral' });
+    expect(c.body.messages[2].content[0].cache_control).toBeUndefined();
+  });
+
+  it('does not add a cache breakpoint to single-shot calls', async () => {
+    const { f, calls } = fakeFetch(() =>
+      Response.json({ id: 'msg_2', type: 'message', role: 'assistant', model: 'm', content: [{ type: 'text', text: '{}' }], stop_reason: 'end_turn', usage: { input_tokens: 5, output_tokens: 1 } }),
+    );
+    const a = new AnthropicAdapter(cfg('anthropic'), 'sk-ant-test-abcdefghijklmnopqrstuvwxyz', { fetch: f });
+    await a.complete({ model: 'm', system: 'SYS', messages: [{ role: 'user', content: 'hi' }] });
+    expect(calls[0]!.body.messages[0].content).toBe('hi');
   });
 
   it('echoes provider payload back verbatim on the next turn', () => {

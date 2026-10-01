@@ -69,7 +69,7 @@ export class AnthropicAdapter implements ProviderAdapter {
           model: request.model,
           max_tokens: request.maxTokens ?? DEFAULT_ANTHROPIC_MAX_TOKENS,
           system: request.system,
-          messages: toAnthropicMessages(request.messages),
+          messages: request.tools?.length ? withCacheBreakpoint(toAnthropicMessages(request.messages)) : toAnthropicMessages(request.messages),
           ...(request.tools?.length
             ? {
                 tools: request.tools.map((t) => ({
@@ -164,6 +164,21 @@ export function toAnthropicMessages(messages: ChatMessage[]): MessageParam[] {
     }
   }
   return out;
+}
+
+/**
+ * Tool loops resend the whole conversation every round. A breakpoint on the final block caches
+ * tools + system + history so the next round reads it at ~10% of the input price. Single-shot
+ * calls skip this: a cache write costs 1.25x and would never be read.
+ */
+export function withCacheBreakpoint(messages: MessageParam[]): MessageParam[] {
+  const last = messages[messages.length - 1];
+  if (!last) return messages;
+  const blocks: ContentBlockParam[] = typeof last.content === 'string' ? [{ type: 'text', text: last.content }] : [...last.content];
+  const tail = blocks[blocks.length - 1];
+  if (!tail || tail.type === 'thinking' || tail.type === 'redacted_thinking') return messages;
+  blocks[blocks.length - 1] = { ...tail, cache_control: { type: 'ephemeral' } } as ContentBlockParam;
+  return [...messages.slice(0, -1), { ...last, content: blocks }];
 }
 
 function describeError(err: unknown): string {
